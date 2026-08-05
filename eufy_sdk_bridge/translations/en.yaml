@@ -1,0 +1,10 @@
+configuration:
+  email:
+    name: eufy email
+    description: The email of the eufy account the bridge logs in with.
+  password:
+    name: eufy password
+    description: The password for that eufy account. Stored by the Supervisor, sent only to the bridge.
+  country:
+    name: Country code
+    description: Two-letter account country (e.g. GB, US, DE) — routes the correct eufy region.
