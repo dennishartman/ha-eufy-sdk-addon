@@ -3,7 +3,7 @@
 # This add-on is a THIN WRAPPER over ha-eufy-sdk-bridge: it builds FROM the bridge image and adds only
 # the glue that turns Home Assistant add-on options into the env the bridge reads. `BUILD_FROM` is set
 # per-arch in build.yaml to the published bridge image.
-ARG BUILD_FROM=ghcr.io/mega-yfue/ha-eufy-sdk-bridge:latest
+ARG BUILD_FROM=ghcr.io/mega-yfue/ha-eufy-sdk-bridge:0.1.36
 FROM ${BUILD_FROM}
 
 # The bridge base is node:alpine (no s6/bashio). `jq` lets the run script read /data/options.json.

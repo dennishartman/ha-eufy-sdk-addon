@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-configuration
 name: eufy-sdk bridge
-version: "0.1.0"
+version: "0.1.36"
 slug: eufy_sdk_bridge
 description: Runs the ha-eufy-sdk bridge (WS control + HTTP video + go2rtc) for the eufy-sdk HACS integration.
 url: "https://github.com/mega-yfue/ha-eufy-sdk-addon/tree/main/eufy_sdk_bridge"
@@ -29,7 +29,20 @@ options:
   email: ""
   password: ""
   country: GB
+  # Optional tuning — these mirror the bridge's own defaults, so leaving them is a no-op.
+  poll_ms: 600000
+  stream_idle_ms: 300000
+  rtsp_idle_off_ms: 300000
+  debug: false
 schema:
   email: str
   password: password
   country: str
+  # How often the bridge re-reads device state from the cloud (ms); 0 disables polling.
+  poll_ms: int(0,)
+  # Auto-off a camera's live P2P feed after this long with no detection (ms); 0 disables. Saves battery.
+  stream_idle_ms: int(0,)
+  # Turn a BATTERY camera's native rtspStream OFF after this long idle (ms); 0 disables. Wired untouched.
+  rtsp_idle_off_ms: int(0,)
+  # Verbose bridge logging (WS commands, control timing, P2P connect/close). Off by default.
+  debug: bool
