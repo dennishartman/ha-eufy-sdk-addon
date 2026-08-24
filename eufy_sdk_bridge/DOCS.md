@@ -13,13 +13,16 @@ RTSP/WebRTC ports are hosted for LAN streaming.
 
 ## Configuration
 
-| Option | Description |
-| --- | --- |
-| `email` | eufy account email |
-| `password` | eufy account password |
-| `country` | Two-letter country code (e.g. `GB`) — routes the eufy region |
+| Option | Default | Description |
+| --- | --- | --- |
+| `email` | — | eufy account email |
+| `password` | — | eufy account password |
+| `country` | `GB` | Two-letter country code — routes the eufy region |
+| `poll_ms` | `600000` | How often the bridge re-reads device state from the cloud (ms); `0` disables polling |
+| `stream_idle_ms` | `300000` | Auto-off a camera's live feed after this long with no detection (ms); `0` disables. Saves battery |
+| `rtsp_idle_off_ms` | `300000` | Turn a **battery** camera's native `rtspStream` OFF after this long idle (ms); `0` disables. Wired cameras untouched |
+| `debug` | `false` | Verbose bridge logging (WS commands, control timing, P2P connect/close) |
 
-The login token persists in the add-on's `/data`, so a restart does not re-authenticate (eufy allows
-one active session per account).
-
-> Status: scaffolding — depends on the `ha-eufy-sdk-bridge` image being published.
+The four tuning options mirror the bridge's own defaults, so leaving them unchanged behaves exactly as
+before. The login token persists in the add-on's `/data`, so a restart does not re-authenticate (eufy
+allows one active session per account; a session bumped elsewhere re-authenticates, escalating to 2FA).
