@@ -1,8 +1,5 @@
 name: Lint
 
-# Validate the add-on config without the HA add-on linter (a marketplace action the org policy
-# blocks): yamllint the manifests + a schema sanity check. Only GitHub-owned actions are used.
-
 on:
   push:
     branches:
@@ -15,45 +12,32 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
-permissions:
-  contents: read
-
 jobs:
-  lint:
-    name: Lint add-on config
+  find:
+    name: Find apps
     runs-on: ubuntu-latest
+    outputs:
+      addons: ${{ steps.addons.outputs.addons_list }}
     steps:
-      - name: Check out the repository
+      - name: ⤵️ Check out code from GitHub
         uses: actions/checkout@v7.0.1
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: 🔍 Find app directories
+        id: addons
+        uses: home-assistant/actions/helpers/find-addons@master
+
+  lint:
+    name: Lint app ${{ matrix.path }}
+    runs-on: ubuntu-latest
+    needs: find
+    strategy:
+      matrix:
+        path: ${{ fromJson(needs.find.outputs.addons) }}
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v7.0.1
+
+      - name: 🚀 Run Home Assistant App Lint
+        uses: frenck/action-addon-linter@v2.21
         with:
-          python-version: "3.12"
-
-      - name: Install linters
-        run: pip install --quiet yamllint pyyaml
-
-      - name: yamllint
-        run: |
-          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" eufy_sdk_bridge
-
-      - name: Validate config.yaml / build.yaml
-        run: |
-          python3 - <<'PY'
-          import sys, yaml, pathlib
-          cfg = yaml.safe_load(pathlib.Path("eufy_sdk_bridge/config.yaml").read_text())
-          missing = [k for k in ("name", "version", "slug", "description", "arch", "image") if k not in cfg]
-          if missing:
-              sys.exit("config.yaml missing keys: " + ", ".join(missing))
-          if "{arch}" not in str(cfg["image"]):
-              sys.exit("image: must contain the {arch} placeholder")
-          bad = [a for a in cfg["arch"] if a not in ("amd64", "aarch64")]
-          if bad:
-              sys.exit(f"unsupported arch (bridge base is amd64/aarch64 only): {bad}")
-          build = yaml.safe_load(pathlib.Path("eufy_sdk_bridge/build.yaml").read_text())
-          bf = set(build.get("build_from", {}))
-          if bf != set(cfg["arch"]):
-              sys.exit(f"build_from arches {bf} != config arch {set(cfg['arch'])}")
-          print("OK:", cfg["name"], cfg["version"], cfg["arch"])
-          PY
+          path: "./${{ matrix.path }}"

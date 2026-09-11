@@ -37,9 +37,8 @@ So the flow for a contribution is:
 
 Every PR into `main`/`dev` runs:
 
-- **Lint** (`.github/workflows/lint.yaml`) — yamllint + a schema sanity check on `config.yaml` /
-  `build.yaml` (required keys, arch/image validity).
-- **Builder** (`.github/workflows/builder.yaml`) — builds every arch with `--test` (no push) so a
+- **Lint** (`.github/workflows/lint.yaml`) — the Home Assistant add-on linter over `eufy_sdk_bridge/`.
+- **Builder** (`.github/workflows/builder.yaml`) — builds each changed app (no publish on PRs) so a
   broken `config.yaml` / `build.yaml` / `Dockerfile` is caught before merge.
 
 Publishing happens only when a **GitHub Release** is published — the Builder then builds and pushes
