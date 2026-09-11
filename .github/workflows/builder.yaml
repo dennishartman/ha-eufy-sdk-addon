@@ -4,13 +4,15 @@ env:
   MONITORED_FILES: "config.yaml Dockerfile build.yaml run.sh"
 
 on:
+  # Publish the images only when a GitHub Release is published.
+  release:
+    types: [published]
+  workflow_dispatch:
+  # PRs build every changed app with --test (no push) as a pre-merge check.
   pull_request:
     branches:
       - main
       - dev
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -28,6 +30,7 @@ jobs:
 
       - name: Get changed files
         id: changed_files
+        if: github.event_name == 'pull_request'
         uses: tj-actions/changed-files@v47
 
       - name: Find app directories
@@ -37,13 +40,17 @@ jobs:
       - name: Filter changed apps
         id: filter
         env:
+          EVENT_NAME: ${{ github.event_name }}
           APPS: ${{ steps.apps.outputs.addons }}
           CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
         run: |
           changed_apps=()
 
-          # If the workflow file itself changed, rebuild all apps
-          if [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
+          if [[ "${EVENT_NAME}" == "release" || "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # A release (or manual run) rebuilds every app regardless of the diff.
+            changed_apps=(${APPS})
+          elif [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
+            # If the workflow file itself changed, rebuild all apps
             changed_apps=(${APPS})
           else
             for app in ${APPS}; do
@@ -78,5 +85,5 @@ jobs:
     uses: ./.github/workflows/build-app.yaml
     with:
       app: ${{ matrix.app }}
-      publish: ${{ github.event_name == 'push' }}
+      publish: ${{ github.event_name == 'release' }}
     secrets: inherit

@@ -20,7 +20,12 @@ export BRIDGE_HOST="0.0.0.0"
 export EUFY_POLL_MS="$(jq -r '.poll_ms // 600000' "$OPTS")"
 export STREAM_IDLE_MS="$(jq -r '.stream_idle_ms // 300000' "$OPTS")"
 export RTSP_IDLE_OFF_MS="$(jq -r '.rtsp_idle_off_ms // 300000' "$OPTS")"
+# Feature toggle: speculative P2P prewarm on high-intent events (off by default).
+[ "$(jq -r '.prewarm // false' "$OPTS")" = "true" ] && export BRIDGE_PREWARM=1
+# Per-event log line is on by default in the bridge; only override when the user turns it off.
+[ "$(jq -r '.event_log // true' "$OPTS")" = "false" ] && export BRIDGE_EVENT_LOG=0
 [ "$(jq -r '.debug // false' "$OPTS")" = "true" ] && export BRIDGE_DEBUG=1
+[ "$(jq -r '.debug_p2p // false' "$OPTS")" = "true" ] && export BRIDGE_DEBUG_P2P=1
 
 # Contract with ha-eufy-sdk-bridge: the bridge image provides this launcher, which starts the daemon
 # AND go2rtc. Defined here so the wrapper stays a pure options→env shim.

@@ -38,17 +38,19 @@ So the flow for a contribution is:
 Every PR into `main`/`dev` runs:
 
 - **Lint** (`.github/workflows/lint.yaml`) — the Home Assistant add-on linter over `eufy_sdk_bridge/`.
-- **Builder** (`.github/workflows/builder.yaml`) — builds the add-on image (no publish on PRs) so a
+- **Builder** (`.github/workflows/builder.yaml`) — builds each changed app (no publish on PRs) so a
   broken `config.yaml` / `build.yaml` / `Dockerfile` is caught before merge.
 
-Publishing happens only on **push to `main`** (i.e. after a release merge), and only when a monitored
-file changed (`config.yaml`, `Dockerfile`, `build.yaml`, `run.sh`).
+Publishing happens only when a **GitHub Release** is published — the Builder then builds and pushes
+the per-arch images (tagged with the `config.yaml` version) to `ghcr.io/mega-yfue`.
 
 ## Cutting a release (maintainers)
 
 1. Bump `version:` in [`eufy_sdk_bridge/config.yaml`](./eufy_sdk_bridge/config.yaml) (and the pinned
    bridge tag in [`build.yaml`](./eufy_sdk_bridge/build.yaml) if the bridge moved).
-2. Merge `dev → main`. The push to `main` builds and publishes the new versioned + `latest` image.
+2. Merge `dev → main`.
+3. Publish a **GitHub Release** with the tag set to the new version. The Builder builds and pushes the
+   per-arch add-on images; Supervisor pulls them by the version in `config.yaml`.
 
 ## Reporting bugs
 
