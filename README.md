@@ -21,7 +21,7 @@ URL and uses Supervisor discovery to auto-fill it on the add-on path.
 
 **One click** — add this repository to your Home Assistant:
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmega-yfue%2Fha-eufy-sdk-addon)
+[![Open your Home Assistant instance and show the add-on store with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_store.svg)](https://my.home-assistant.io/redirect/supervisor_store/?repository_url=https%3A%2F%2Fgithub.com%2Fmega-yfue%2Fha-eufy-sdk-addon)
 
 Or manually: **Settings → Add-ons → Add-on Store → ⋮ → Repositories**, add
 `https://github.com/mega-yfue/ha-eufy-sdk-addon`, then install **eufy-sdk bridge**.
