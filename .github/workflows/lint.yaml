@@ -35,7 +35,8 @@ jobs:
         run: pip install --quiet yamllint pyyaml
 
       - name: yamllint
-        run: yamllint -d "{extends: relaxed, rules: {line-length: disable}}" eufy_sdk_bridge
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" eufy_sdk_bridge
 
       - name: Validate config.yaml / build.yaml
         run: |
