@@ -83,6 +83,10 @@ jobs:
           container-registry-password: ${{ secrets.GITHUB_TOKEN }}
           context: "./${{ inputs.app }}"
           image: ${{ matrix.image }}
+          # Don't pull+cosign-verify a `:latest` cache image — it doesn't exist until the first
+          # release publishes it, and verifying a missing image fails the build (DENIED). Empty
+          # disables the inline-cache-image path; GHA build cache (cache-gha) still applies.
+          cache-image-tag: ""
           image-tags: |
             ${{ needs.prepare.outputs.version }}
             latest

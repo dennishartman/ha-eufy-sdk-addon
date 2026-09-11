@@ -36,7 +36,10 @@ options:
   poll_ms: 600000
   stream_idle_ms: 300000
   rtsp_idle_off_ms: 300000
+  prewarm: false
+  event_log: true
   debug: false
+  debug_p2p: false
 schema:
   email: str
   password: password
@@ -47,5 +50,12 @@ schema:
   stream_idle_ms: int(0,)
   # Turn a BATTERY camera's native rtspStream OFF after this long idle (ms); 0 disables. Wired untouched.
   rtsp_idle_off_ms: int(0,)
+  # Speculatively open a camera's P2P on a high-intent event (doorbell/person/pet/package) so live
+  # view starts instantly. Off by default — it holds a battery camera's radio ~28s per event.
+  prewarm: bool
+  # Log one line per push/semantic event (what it is, clients reached, image fetches). On by default.
+  event_log: bool
   # Verbose bridge logging (WS commands, control timing, P2P connect/close). Off by default.
   debug: bool
+  # Additionally route the raw per-frame P2P transport logs (very noisy). Off by default.
+  debug_p2p: bool
