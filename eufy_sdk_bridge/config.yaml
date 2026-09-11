@@ -4,6 +4,9 @@ version: "0.2.0"
 slug: eufy_sdk_bridge
 description: Runs the ha-eufy-sdk bridge (WS control + HTTP video + go2rtc) for the eufy-sdk HACS integration.
 url: "https://github.com/mega-yfue/ha-eufy-sdk-addon/tree/main/eufy_sdk_bridge"
+# Supervisor pulls this prebuilt per-arch image (published by the Builder workflow on a GitHub
+# Release). {arch} is substituted with amd64 / aarch64.
+image: "ghcr.io/mega-yfue/{arch}-addon-eufy-sdk-bridge"
 # Keep in sync with what the bridge publishes: amd64 + arm64 only (node:24-alpine has no armv7 base).
 arch:
   - aarch64

@@ -1,82 +1,55 @@
 name: Builder
 
-env:
-  MONITORED_FILES: "config.yaml Dockerfile build.yaml run.sh"
+# Build the add-on images with the official Home Assistant builder, run as a Docker image via the
+# CLI. That keeps the only `uses:` action GitHub-owned (actions/checkout), so the org's "actions must
+# be mega-yfue-owned or GitHub-created" policy doesn't block it (image pulls aren't governed by it).
+#
+# - Pull requests build every arch with --test (no push) so a broken config/build/Dockerfile is
+#   caught before merge.
+# - Publishing a GitHub Release builds and pushes the per-arch images, tagged with the config.yaml
+#   version, to the registry named by `image:` in config.yaml.
 
 on:
+  release:
+    types: [published]
+  workflow_dispatch:
   pull_request:
     branches:
       - main
       - dev
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
 
 jobs:
-  init:
-    name: Initialize builds
+  build:
+    name: Build add-on images
+    if: github.repository == 'mega-yfue/ha-eufy-sdk-addon'
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.filter.outputs.changed }}
-      changed_apps: ${{ steps.filter.outputs.changed_apps }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7.0.1
 
-      - name: Get changed files
-        id: changed_files
-        uses: tj-actions/changed-files@v47
+      - name: Enable multi-arch emulation (binfmt)
+        run: docker run --rm --privileged tonistiigi/binfmt --install arm64
 
-      - name: Find app directories
-        id: apps
-        uses: home-assistant/actions/helpers/find-addons@master
+      - name: Log in to ghcr.io
+        if: github.event_name == 'release'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Filter changed apps
-        id: filter
-        env:
-          APPS: ${{ steps.apps.outputs.addons }}
-          CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
+      - name: Build add-on (push on release, --test otherwise)
         run: |
-          changed_apps=()
-
-          # If the workflow file itself changed, rebuild all apps
-          if [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
-            changed_apps=(${APPS})
+          set -euo pipefail
+          mounts=(-v /var/run/docker.sock:/var/run/docker.sock:ro -v "$(pwd)":/data)
+          flags=(--all --target /data/eufy_sdk_bridge)
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            # docker login wrote credentials here; the builder needs them to push.
+            mounts+=(-v "$HOME/.docker":/root/.docker:ro)
           else
-            for app in ${APPS}; do
-              for file in ${MONITORED_FILES}; do
-                if [[ "${CHANGED_FILES}" =~ ${app}/${file} ]]; then
-                  changed_apps+=("${app}")
-                  break
-                fi
-              done
-            done
+            flags+=(--test)
           fi
-
-          if [[ ${#changed_apps[@]} -gt 0 ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "changed_apps=$(jq -nc '$ARGS.positional' --args "${changed_apps[@]}")" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  build-app:
-    name: Build ${{ matrix.app }}
-    needs: init
-    if: needs.init.outputs.changed == 'true'
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        app: ${{ fromJSON(needs.init.outputs.changed_apps) }}
-    uses: ./.github/workflows/build-app.yaml
-    with:
-      app: ${{ matrix.app }}
-      publish: ${{ github.event_name == 'push' }}
-    secrets: inherit
+          docker run --rm --privileged "${mounts[@]}" \
+            ghcr.io/home-assistant/amd64-builder "${flags[@]}"
