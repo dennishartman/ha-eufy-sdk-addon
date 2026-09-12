@@ -6,10 +6,27 @@ to talk to without you running Docker yourself.
 
 ## How it works
 
-The add-on builds `FROM` the bridge image and adds one thing: it reads your add-on options
-(`email` / `password` / `country`) and passes them to the bridge as the env it expects. The daemon +
-its bundled go2rtc then start automatically. Ingress fronts the control/HTTP port (`:3000`); go2rtc's
-RTSP/WebRTC ports are hosted for LAN streaming.
+The add-on builds `FROM` the bridge image and adds one thing: it reads your add-on options and passes
+them to the bridge as the env it expects. The daemon + its bundled go2rtc then start automatically.
+The control port (`:3000`) is published so the integration can reach it, and go2rtc's RTSP/WebRTC
+ports are hosted for LAN streaming.
+
+## Connecting the eufy-sdk integration
+
+After the add-on is **started**, add the [`eufy-sdk`](https://github.com/mega-yfue/ha-eufy-sdk)
+integration (Settings → Devices & Services → Add Integration → eufy-sdk) and point it at the bridge:
+
+- **Host:** `homeassistant.local` (or your Home Assistant host's IP address)
+- **Port:** `3000`
+
+> **Not `localhost`.** The integration runs in the Home Assistant container, so `localhost` is HA
+> itself, not the add-on. Use the host name/IP above, or the add-on's own **Hostname** (shown on this
+> add-on's **Info** tab, e.g. `local-eufy-sdk-bridge`) — that one works over HA's internal network
+> even if you unpublish the port.
+
+You can change the published host port in the add-on's **Network** panel (set it empty to unpublish and
+use the add-on hostname instead). On first login eufy may ask for **2FA / a captcha** — the
+integration's config flow walks you through it.
 
 ## Configuration
 
@@ -21,8 +38,11 @@ RTSP/WebRTC ports are hosted for LAN streaming.
 | `poll_ms` | `600000` | How often the bridge re-reads device state from the cloud (ms); `0` disables polling |
 | `stream_idle_ms` | `300000` | Auto-off a camera's live feed after this long with no detection (ms); `0` disables. Saves battery |
 | `rtsp_idle_off_ms` | `300000` | Turn a **battery** camera's native `rtspStream` OFF after this long idle (ms); `0` disables. Wired cameras untouched |
+| `prewarm` | `false` | Speculatively open a camera's P2P on a high-intent event (doorbell/person/pet/package) so live view starts instantly. Holds a battery camera's radio ~28s per event |
+| `event_log` | `true` | Log one line per push/semantic event (what it is, clients reached, image fetches) |
 | `debug` | `false` | Verbose bridge logging (WS commands, control timing, P2P connect/close) |
+| `debug_p2p` | `false` | Additionally route the raw per-frame P2P transport logs (very noisy) |
 
-The four tuning options mirror the bridge's own defaults, so leaving them unchanged behaves exactly as
+The tuning options mirror the bridge's own defaults, so leaving them unchanged behaves exactly as
 before. The login token persists in the add-on's `/data`, so a restart does not re-authenticate (eufy
 allows one active session per account; a session bumped elsewhere re-authenticates, escalating to 2FA).
