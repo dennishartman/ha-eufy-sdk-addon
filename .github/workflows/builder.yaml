@@ -1,17 +1,24 @@
 name: Builder
 
 env:
-  MONITORED_FILES: "config.yaml Dockerfile build.yaml run.sh"
+  # Files that actually change the built image → a change to one (in an app's folder) rebuilds that app
+  # on merge to dev. `config.yaml` is deliberately excluded: options/schema/version don't affect the
+  # image (run.sh reads options at runtime; the version only tags the image on a Release), and the
+  # linter validates config.yaml separately — so a version bump / option edit no longer triggers a build.
+  MONITORED_FILES: "Dockerfile build.yaml run.sh"
 
 on:
-  # Publish the images only when a GitHub Release is published.
+  # Publish images only when a GitHub Release is published. Channel split by pre-release flag:
+  #   full release  → stable apps  (eufy_sdk_bridge      → addon-eufy-sdk-bridge)
+  #   pre-release   → dev apps      (eufy_sdk_bridge_dev  → addon-eufy-sdk-bridge-dev)
   release:
     types: [published]
   workflow_dispatch:
-  # PRs build every changed app with --test (no push) as a pre-merge check.
-  pull_request:
+  # An image is built ONCE per merge into `dev` (a --test build, no push) as a post-merge smoke test,
+  # and built + pushed on a Release. PRs are NOT built here — they only lint (see lint.yaml) — so
+  # iterating on a PR no longer kicks a full multi-arch build on every push.
+  push:
     branches:
-      - main
       - dev
 
 permissions:
@@ -30,7 +37,7 @@ jobs:
 
       - name: Get changed files
         id: changed_files
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'push'
         uses: tj-actions/changed-files@v47
 
       - name: Find app directories
@@ -41,13 +48,25 @@ jobs:
         id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
           APPS: ${{ steps.apps.outputs.addons }}
           CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
         run: |
           changed_apps=()
 
-          if [[ "${EVENT_NAME}" == "release" || "${EVENT_NAME}" == "workflow_dispatch" ]]; then
-            # A release (or manual run) rebuilds every app regardless of the diff.
+          if [[ "${EVENT_NAME}" == "release" ]]; then
+            # Channel split: a FULL release publishes the stable apps; a PRE-release publishes the dev
+            # channel (the `*_dev` apps). Keeping them apart stops a beta from moving the stable image
+            # (and stops a stable release from re-publishing dev). GitHub fires `published` for both.
+            for app in ${APPS}; do
+              if [[ "${PRERELEASE}" == "true" && "${app}" == *_dev ]]; then
+                changed_apps+=("${app}")
+              elif [[ "${PRERELEASE}" != "true" && "${app}" != *_dev ]]; then
+                changed_apps+=("${app}")
+              fi
+            done
+          elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # A manual run rebuilds every app (test-only — publish is gated to release events below).
             changed_apps=(${APPS})
           elif [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
             # If the workflow file itself changed, rebuild all apps

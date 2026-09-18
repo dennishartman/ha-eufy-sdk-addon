@@ -31,6 +31,17 @@ it. On first login eufy may ask for **2FA or a captcha** — resolve it from the
 [`ha-eufy-sdk`](https://github.com/mega-yfue/ha-eufy-sdk) integration's config flow, which
 auto-discovers this add-on. See [DOCS.md](./eufy_sdk_bridge/DOCS.md) for the full option reference.
 
+## Dev / edge channel
+
+This repository ships **two** add-ons: the stable **eufy-sdk bridge** and a **eufy-sdk bridge (dev)**
+that tracks the bridge's rolling `:dev` image — for trying changes before a stable release. The dev
+add-on is flagged `stage: experimental`, so it only appears in the store when your HA profile has
+**Advanced Mode** enabled. Both share the same eufy account and the same ports, so **run one at a
+time** (a second bridge on the same account displaces the first's session).
+
+Releases map to channels automatically: a **full GitHub Release** publishes the stable image
+(`addon-eufy-sdk-bridge`), a **pre-release** publishes the dev image (`addon-eufy-sdk-bridge-dev`).
+
 ## Where it fits
 
 | Repo | Role |

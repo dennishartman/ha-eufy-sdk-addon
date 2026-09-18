@@ -1,0 +1,10 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-buildyaml
+#
+# DEV channel: build FROM the bridge's ROLLING `:dev` image (published on every push to the bridge's
+# `dev` branch). Unlike the stable add-on this is intentionally NOT pinned — the point of the dev channel
+# is to track the development line, so each dev image build picks up the latest `:dev` bridge.
+build_from:
+  aarch64: ghcr.io/mega-yfue/ha-eufy-sdk-bridge:dev
+  amd64: ghcr.io/mega-yfue/ha-eufy-sdk-bridge:dev
+labels:
+  org.opencontainers.image.source: "https://github.com/mega-yfue/ha-eufy-sdk-addon"
