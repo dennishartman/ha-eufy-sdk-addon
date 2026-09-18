@@ -1,7 +1,11 @@
 name: Builder
 
 env:
-  MONITORED_FILES: "config.yaml Dockerfile build.yaml run.sh"
+  # Files that actually change the built image → a change to one (in an app's folder) rebuilds that app
+  # on merge to dev. `config.yaml` is deliberately excluded: options/schema/version don't affect the
+  # image (run.sh reads options at runtime; the version only tags the image on a Release), and the
+  # linter validates config.yaml separately — so a version bump / option edit no longer triggers a build.
+  MONITORED_FILES: "Dockerfile build.yaml run.sh"
 
 on:
   # Publish images only when a GitHub Release is published. Channel split by pre-release flag:
@@ -10,10 +14,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-  # PRs build every changed app with --test (no push) as a pre-merge check.
-  pull_request:
+  # An image is built ONCE per merge into `dev` (a --test build, no push) as a post-merge smoke test,
+  # and built + pushed on a Release. PRs are NOT built here — they only lint (see lint.yaml) — so
+  # iterating on a PR no longer kicks a full multi-arch build on every push.
+  push:
     branches:
-      - main
       - dev
 
 permissions:
@@ -32,7 +37,7 @@ jobs:
 
       - name: Get changed files
         id: changed_files
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'push'
         uses: tj-actions/changed-files@v47
 
       - name: Find app directories
