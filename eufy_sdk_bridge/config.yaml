@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-configuration
 name: eufy-sdk bridge (wired)
-version: "0.3.2"
+version: "0.3.3"
 slug: eufy_sdk_bridge_wired
 description: Runs the ha-eufy-sdk bridge with an optional wired-stream override for selected devices.
 url: "https://github.com/dennishartman/ha-eufy-sdk-addon/tree/main/eufy_sdk_bridge"
@@ -39,7 +39,7 @@ options:
   debug_p2p: false
   # Comma-separated serials that should bypass the SDK battery stream budget. Keep this value local.
   force_wired_serials: ""
-  # Experimental workaround for cameras that emit standalone 64,000-byte access units.
+  # Compatibility mode for cameras whose 64,000-byte continuation begins with a fresh H.264 start code.
   treat_64000_as_complete: false
   # ── Anker Solix (optional; a SEPARATE Anker account from eufy) ──────────────────────────────────
   solix_email: ""
@@ -61,7 +61,7 @@ schema:
   debug_p2p: bool
   # Optional comma-separated device serials. They are passed only at runtime, never baked into the image.
   force_wired_serials: "str?"
-  # Deliver 64,000-byte video units directly instead of waiting for a tail frame that never arrives.
+  # Join matching split units by timestamp/sequence even when their continuation has a start code.
   treat_64000_as_complete: bool
   solix_email: "str?"
   solix_password: "password?"
