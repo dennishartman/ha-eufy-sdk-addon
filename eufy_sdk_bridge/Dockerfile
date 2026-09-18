@@ -10,13 +10,19 @@ FROM ${BUILD_FROM}
 # Supervisor discovery with the effective add-on network mapping.
 RUN apk add --no-cache curl jq
 
+# The upstream bridge currently derives the stream budget from the device's reported battery
+# capability. Allow selected, physically wired devices to override that classification at runtime.
+# No serial is baked into the image: FORCE_WIRED_SERIALS comes from private Home Assistant options.
+RUN grep -q 'const feed = await cam.openReadable();' /app/src/http-routes.mjs \
+    && sed -i 's|const feed = await cam.openReadable();|const feed = await cam.openReadable((process.env.FORCE_WIRED_SERIALS ?? "").split(",").map((value) => value.trim()).filter(Boolean).includes(sn) ? { powered: "wired" } : undefined);|' /app/src/http-routes.mjs
+
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
 LABEL \
-    org.opencontainers.image.title="Home Assistant Add-on: eufy-sdk bridge" \
-    org.opencontainers.image.description="Runs the ha-eufy-sdk bridge for the eufy-sdk HACS integration." \
-    org.opencontainers.image.source="https://github.com/mega-yfue/ha-eufy-sdk-addon" \
+    org.opencontainers.image.title="Home Assistant Add-on: eufy-sdk bridge (wired)" \
+    org.opencontainers.image.description="Runs the ha-eufy-sdk bridge with an optional wired-stream override." \
+    org.opencontainers.image.source="https://github.com/dennishartman/ha-eufy-sdk-addon" \
     org.opencontainers.image.licenses="MIT"
 
 CMD [ "/run.sh" ]
