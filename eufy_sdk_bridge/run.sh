@@ -21,6 +21,9 @@ export BRIDGE_HOST="0.0.0.0"
 export EUFY_POLL_MS="$(jq -r '.poll_ms // 600000' "$OPTS")"
 export STREAM_IDLE_MS="$(jq -r '.stream_idle_ms // 300000' "$OPTS")"
 export RTSP_IDLE_OFF_MS="$(jq -r '.rtsp_idle_off_ms // 300000' "$OPTS")"
+# Optional comma-separated serials that must be treated as wired for live streaming. The value stays
+# in Home Assistant's private add-on options and is only passed to the bridge process at runtime.
+export FORCE_WIRED_SERIALS="$(jq -r '.force_wired_serials // ""' "$OPTS")"
 # Feature toggle: speculative P2P prewarm on high-intent events (off by default).
 [ "$(jq -r '.prewarm // false' "$OPTS")" = "true" ] && export BRIDGE_PREWARM=1
 # Per-event log line is on by default in the bridge; only override when the user turns it off.
