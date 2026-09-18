@@ -1,4 +1,9 @@
-# Home Assistant Add-on: eufy-sdk bridge
+# Home Assistant Add-on: eufy-sdk bridge (dev)
+
+> ⚠️ **Development / edge channel.** Identical to the stable **eufy-sdk bridge**, but it builds from the
+> bridge's rolling `:dev` image — it gets new features and fixes first, at the cost of being less tested.
+> Install the stable add-on for everyday use. Don't run both at once: they share one eufy account, which
+> allows a single session, so a second bridge displaces the first.
 
 Runs the [`ha-eufy-sdk-bridge`](https://github.com/mega-yfue/ha-eufy-sdk-bridge) daemon inside Home
 Assistant, so the [`eufy-sdk`](https://github.com/mega-yfue/ha-eufy-sdk) HACS integration has a bridge
