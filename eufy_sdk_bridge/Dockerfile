@@ -16,6 +16,11 @@ RUN apk add --no-cache curl jq
 RUN grep -q 'const feed = await cam.openReadable();' /app/src/http-routes.mjs \
     && sed -i 's|const feed = await cam.openReadable();|const feed = await cam.openReadable((process.env.FORCE_WIRED_SERIALS ?? "").split(",").map((value) => value.trim()).filter(Boolean).includes(sn) ? { powered: "wired" } : undefined);|' /app/src/http-routes.mjs
 
+# SDK 0.1.0 assumes every 64,000-byte video payload has a continuation. Some models send a complete
+# access unit at exactly that size; make the alternative behavior an explicit runtime opt-in.
+RUN grep -q 'var STATION_CHUNK_BYTES = 64e3;' /app/node_modules/@mega-yfue/eufy-sdk/dist/index.js \
+    && sed -i 's|var STATION_CHUNK_BYTES = 64e3;|var STATION_CHUNK_BYTES = process.env.TREAT_64000_AS_COMPLETE === "1" ? -1 : 64e3;|' /app/node_modules/@mega-yfue/eufy-sdk/dist/index.js
+
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
