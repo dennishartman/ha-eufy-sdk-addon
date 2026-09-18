@@ -28,6 +28,17 @@ export RTSP_IDLE_OFF_MS="$(jq -r '.rtsp_idle_off_ms // 300000' "$OPTS")"
 [ "$(jq -r '.debug // false' "$OPTS")" = "true" ] && export BRIDGE_DEBUG=1
 [ "$(jq -r '.debug_p2p // false' "$OPTS")" = "true" ] && export BRIDGE_DEBUG_P2P=1
 
+# Optional Anker Solix (a SEPARATE Anker account from eufy). Empty email/password ⇒ Solix stays off
+# (the bridge enables it only when BOTH are set). Empty country ⇒ the bridge falls back to EUFY_COUNTRY.
+# Its session persists on /data so the Solix login token survives restarts, like the eufy one.
+export SOLIX_EMAIL="$(jq -r '.solix_email // ""' "$OPTS")"
+export SOLIX_PASSWORD="$(jq -r '.solix_password // ""' "$OPTS")"
+export SOLIX_COUNTRY="$(jq -r '.solix_country // ""' "$OPTS")"
+export SOLIX_SESSION="/data/.solix-session.json"
+export SOLIX_SCENE_POLL_MS="$(jq -r '.solix_scene_poll_ms // 90000' "$OPTS")"
+export SOLIX_RETRY_BASE_MS="$(jq -r '.solix_retry_base_ms // 900000' "$OPTS")"
+export SOLIX_RETRY_MAX_MS="$(jq -r '.solix_retry_max_ms // 3600000' "$OPTS")"
+
 register_discovery() {
   if [ -z "${SUPERVISOR_TOKEN:-}" ]; then
     echo "[addon] SUPERVISOR_TOKEN is unavailable; skipping eufy_sdk discovery"

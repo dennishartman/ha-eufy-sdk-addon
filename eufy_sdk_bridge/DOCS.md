@@ -46,6 +46,12 @@ flow walks you through it.
 | `event_log` | `true` | Log one line per push/semantic event (what it is, clients reached, image fetches) |
 | `debug` | `false` | Verbose bridge logging (WS commands, control timing, P2P connect/close) |
 | `debug_p2p` | `false` | Additionally route the raw per-frame P2P transport logs (very noisy) |
+| `solix_email` | — | Anker **Solix** account email (a **separate** account from eufy). Fill this **and** `solix_password` to add the Solarbank / smart-meter entities; leave empty to keep Solix off |
+| `solix_password` | — | Solix account password |
+| `solix_country` | — | Two-letter Solix account country (e.g. `GB`, `DE`); empty reuses `country` |
+| `solix_scene_poll_ms` | `90000` | Solix scene backstop poll cadence (ms) — the slow authed read that fills battery temperature + a SOC cross-check the realtime push doesn't carry |
+| `solix_retry_base_ms` | `900000` | Solix login self-heal backoff: starting delay after a failed login (ms), doubling up to the cap. Anker throttles frequent logins |
+| `solix_retry_max_ms` | `3600000` | Cap for the escalating Solix login-retry backoff (ms) |
 
 The tuning options mirror the bridge's own defaults, so leaving them unchanged behaves exactly as
 before. The login token persists in the add-on's `/data`, so a restart does not re-authenticate (eufy
