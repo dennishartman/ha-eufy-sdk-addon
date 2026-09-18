@@ -4,7 +4,9 @@ env:
   MONITORED_FILES: "config.yaml Dockerfile build.yaml run.sh"
 
 on:
-  # Publish the images only when a GitHub Release is published.
+  # Publish images only when a GitHub Release is published. Channel split by pre-release flag:
+  #   full release  → stable apps  (eufy_sdk_bridge      → addon-eufy-sdk-bridge)
+  #   pre-release   → dev apps      (eufy_sdk_bridge_dev  → addon-eufy-sdk-bridge-dev)
   release:
     types: [published]
   workflow_dispatch:
@@ -41,13 +43,25 @@ jobs:
         id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
           APPS: ${{ steps.apps.outputs.addons }}
           CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
         run: |
           changed_apps=()
 
-          if [[ "${EVENT_NAME}" == "release" || "${EVENT_NAME}" == "workflow_dispatch" ]]; then
-            # A release (or manual run) rebuilds every app regardless of the diff.
+          if [[ "${EVENT_NAME}" == "release" ]]; then
+            # Channel split: a FULL release publishes the stable apps; a PRE-release publishes the dev
+            # channel (the `*_dev` apps). Keeping them apart stops a beta from moving the stable image
+            # (and stops a stable release from re-publishing dev). GitHub fires `published` for both.
+            for app in ${APPS}; do
+              if [[ "${PRERELEASE}" == "true" && "${app}" == *_dev ]]; then
+                changed_apps+=("${app}")
+              elif [[ "${PRERELEASE}" != "true" && "${app}" != *_dev ]]; then
+                changed_apps+=("${app}")
+              fi
+            done
+          elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # A manual run rebuilds every app (test-only — publish is gated to release events below).
             changed_apps=(${APPS})
           elif [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
             # If the workflow file itself changed, rebuild all apps
