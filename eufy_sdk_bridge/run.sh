@@ -24,9 +24,9 @@ export RTSP_IDLE_OFF_MS="$(jq -r '.rtsp_idle_off_ms // 300000' "$OPTS")"
 # Optional comma-separated serials that must be treated as wired for live streaming. The value stays
 # in Home Assistant's private add-on options and is only passed to the bridge process at runtime.
 export FORCE_WIRED_SERIALS="$(jq -r '.force_wired_serials // ""' "$OPTS")"
-# Model-specific compatibility escape hatch. Disabled by default because genuine split units still need
-# reassembly; enable only when the SDK repeatedly reports a 64,000-byte unit whose tail never arrives.
-[ "$(jq -r '.treat_64000_as_complete // false' "$OPTS")" = "true" ] && export TREAT_64000_AS_COMPLETE=1
+# Model-specific compatibility escape hatch: trust matching timestamp/sequence fields when reassembling a
+# split unit, even when its continuation starts at a fresh H.264 NAL boundary.
+[ "$(jq -r '.treat_64000_as_complete // false' "$OPTS")" = "true" ] && export JOIN_SPLIT_FRAMES_BY_IDENTITY=1
 # Feature toggle: speculative P2P prewarm on high-intent events (off by default).
 [ "$(jq -r '.prewarm // false' "$OPTS")" = "true" ] && export BRIDGE_PREWARM=1
 # Per-event log line is on by default in the bridge; only override when the user turns it off.
